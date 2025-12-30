@@ -6,7 +6,7 @@ This document outlines how to extend the BindingGenerator to automatically produ
 
 - ✅ **Phase 1 Complete** (December 30, 2024) - New union type patterns (BoolOrString, NumberOrStringArray)
 - ✅ **Phase 2 Complete** (December 30, 2024) - SingleOrArrayType for Grid/XAxis/YAxis automation
-- ⏳ **Phase 3 Pending** - EnumOrFunctionType for Sort properties
+- ✅ **Phase 3 Complete** (December 30, 2024) - EnumOrFunctionType for Sort properties
 - ⏳ **Phase 4 Pending** - Visual properties enrichment (optional)
 
 ## Current Generator Architecture
@@ -285,6 +285,32 @@ if (prop.MappedType is EnumOrFunctionType enumOrFunc)
 ```
 
 **Difficulty:** ⭐⭐⭐ Medium
+
+**Implementation Complete (December 30, 2024):**
+
+✅ Created `Types/EnumOrFunctionType.cs` with EnumTypeName property  
+✅ Added detection logic in BasePhase.cs for `["enum", "function"]` pattern  
+✅ Used `TryGetMappedEnumType` to resolve enum type dynamically  
+✅ Modified ObjectTypeClassGenerator.cs to generate three properties when encountering EnumOrFunctionType  
+✅ Created 8 unit tests in Phase3EnumOrFunctionTests.cs (all passing)  
+✅ Verified existing manual implementations (FunnelSeries.Sort, SunburstSeries.Sort) match generated pattern  
+
+**Test Results:** 57/57 tests passing (41 original + 8 Phase 2 + 8 Phase 3)
+
+**Properties Now Automatable:**
+- `FunnelSeries.Sort` / `SortFunction` / `SortObject` (enum: FunnelSortOrder)
+- `SunburstSeries.Sort` / `SortFunction` / `SortObject` (enum: SortOrder)
+
+**How It Works:**
+When the generator encounters a property with `types: ["enum", "function"]` in option.json, it:
+1. Looks up the enum type using the existing `TryGetMappedEnumType` method
+2. Creates an EnumOrFunctionType with the resolved enum name
+3. Generates three properties:
+   - `{PropertyName}Object` - object backing field with [JsonPropertyName]
+   - `{PropertyName}` - enum accessor with cast: `(EnumType?){PropertyName}Object`
+   - `{PropertyName}Function` - JavascriptFunction accessor with `as` cast
+
+**Note:** This pattern automatically handles any property where ECharts accepts either an enum value OR a custom JavaScript function, enabling type-safe access while maintaining flexibility.
 
 ---
 

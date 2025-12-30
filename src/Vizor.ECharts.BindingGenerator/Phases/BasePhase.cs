@@ -281,11 +281,27 @@ internal abstract class BasePhase
 					return new MappedCustomType(typeof(ColorOrFunction));
 				case ("color", "number"): // specific case for borderColorSaturation
 					return new SimpleType("double");
-			}
+			case ("enum", "function"):
+				// Enum + Function pattern (e.g., FunnelSeries.Sort)
+				// Need to determine the enum type from the enum options
+				if (typeCollection.TryGetMappedEnumType(prop.Name, parent.Name, out var enumType) && enumType != null)
+				{
+					return new EnumOrFunctionType(enumType.DotNetType);
+				}
+				else
+				{
+					// Fallback if enum type not found
+					Console.WriteLine($"WARNING: Could not resolve enum type for '{prop.Name}' in '{parent.Name}' with enum+function pattern");
+					return new SimpleType("object")
+					{
+						TypeWarning = $"enum,function type '{prop.Name}' in '{parent.Name}' could not resolve enum type"
+					};
+				}
 		}
+	}
 
-		// even more complex matching
-		if (optProp.Types is ["function", "number", "string"])
+	// even more complex matching
+	if (optProp.Types is ["function", "number", "string"])
 		{
 			return new MappedCustomType(typeof(NumberOrStringOrFunction));
 		}
