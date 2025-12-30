@@ -245,6 +245,8 @@ internal abstract class BasePhase
 			{
 				case ("boolean", "number"):
 					return new MappedCustomType(typeof(NumberOrBool));
+				case ("boolean", "string"):
+					return new MappedCustomType(typeof(BoolOrString));
 				case ("number", "string"):
 					return new MappedCustomType(typeof(NumberOrString));
 				case ("icon", "string"):
@@ -292,6 +294,10 @@ internal abstract class BasePhase
 		else if (optProp.Types is ["array", "number", "vector"])
 		{
 			return new MappedCustomType(typeof(NumberArray));
+		}
+		else if (optProp.Types is ["array", "number", "string"])
+		{
+			return new MappedCustomType(typeof(NumberOrStringArray));
 		}
 
 		// give additional enum warning if any of the types is an enum
