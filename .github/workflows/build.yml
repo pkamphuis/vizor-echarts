@@ -28,6 +28,9 @@ jobs:
       
       - name: Build .NET
         run: dotnet build src/Vizor.ECharts.Demo.sln --no-restore --configuration Debug
+
+      - name: Test .NET
+        run: dotnet test src/Vizor.ECharts.Tests/Vizor.ECharts.Tests.csproj --no-build --configuration Debug --logger "trx;LogFileName=test-results.trx" --results-directory ./artifacts/test-results
       
       - name: Install npm dependencies
         run: npm install
@@ -45,6 +48,13 @@ jobs:
         with:
           name: nuget-package
           path: src/Vizor.ECharts/bin/Release/**/*.nupkg
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: artifacts/test-results
       
       - name: Upload JS artifacts
         uses: actions/upload-artifact@v4
