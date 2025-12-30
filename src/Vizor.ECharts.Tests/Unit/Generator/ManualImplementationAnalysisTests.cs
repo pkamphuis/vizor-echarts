@@ -122,15 +122,15 @@ public class ManualImplementationAnalysisTests
 			}
 		}
 
-		Assert.IsTrue(unionTypes.Count >= 10, "Expected at least 10 union type implementations");
-	}
+	Assert.IsGreaterThanOrEqualTo(10, unionTypes.Count, "Expected at least 10 union type implementations");
+}
 
-	[TestMethod]
-	public void MapWarningsToManualImplementations()
-	{
-		// Cross-reference warnings.txt with actual implementations
-		var projectRoot = GetEChartsProjectRoot();
-		var generatorRoot = Path.GetFullPath(Path.Combine(projectRoot, "..", "Vizor.ECharts.BindingGenerator"));
+[TestMethod]
+public void MapWarningsToManualImplementations()
+{
+	// Cross-reference warnings.txt with actual implementations
+	var projectRoot = GetEChartsProjectRoot();
+	var generatorRoot = Path.GetFullPath(Path.Combine(projectRoot, "..", "Vizor.ECharts.BindingGenerator"));
 		var warningsFile = Path.Combine(generatorRoot, "warnings.txt");
 
 		if (!File.Exists(warningsFile))
@@ -196,7 +196,7 @@ public class ManualImplementationAnalysisTests
 			Console.WriteLine($"  ✗ {skip}");
 		}
 
-		Assert.IsTrue(implementedManually.Count > 0, "Expected to find manual implementations for unmapped properties");
+		Assert.IsNotEmpty(implementedManually, "Expected to find manual implementations for unmapped properties");
 	}
 
 	[TestMethod]

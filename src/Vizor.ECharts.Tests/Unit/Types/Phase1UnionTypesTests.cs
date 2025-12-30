@@ -34,7 +34,7 @@ public class Phase1UnionTypesTests
 	{
 		BoolOrString value = true;
 		Assert.IsTrue(value.Bool.HasValue);
-		Assert.AreEqual(true, value.Bool.Value);
+	Assert.IsTrue(value.Bool.Value);
 		Assert.IsNull(value.String);
 	}
 
@@ -76,14 +76,14 @@ public class Phase1UnionTypesTests
 		// Test array
 		NumberOrStringArray array = new NumberOrString[] { 10.0, "20%", 30.0 };
 		var jsonArray = JsonSerializer.Serialize(array, chart.GetSerializerOptions());
-		Assert.IsTrue(jsonArray.Contains("["));
-		Assert.IsTrue(jsonArray.Contains("10"));
-		Assert.IsTrue(jsonArray.Contains("\"20%\""));
-		Assert.IsTrue(jsonArray.Contains("30"));
-	}
+	Assert.Contains("[", jsonArray);
+	Assert.Contains("10", jsonArray);
+	Assert.Contains("\"20%\"", jsonArray);
+	Assert.Contains("30", jsonArray);
+}
 
-	[TestMethod]
-	public void Phase1Types_AreRegisteredInGenerator()
+[TestMethod]
+public void Phase1Types_AreRegisteredInGenerator()
 	{
 		// This test documents that Phase 1 added these type mappings to BasePhase.cs
 		var phase1Types = new[]
@@ -95,7 +95,7 @@ public class Phase1UnionTypesTests
 		foreach (var type in phase1Types)
 		{
 			Assert.IsNotNull(type, $"Phase 1 type {type.Name} should exist");
-			Assert.IsTrue(type.Namespace == "Vizor.ECharts", $"{type.Name} should be in Vizor.ECharts namespace");
+			Assert.AreEqual("Vizor.ECharts", type.Namespace, $"{type.Name} should be in Vizor.ECharts namespace");
 		}
 	}
 }
