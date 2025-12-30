@@ -2,6 +2,13 @@
 
 This document outlines how to extend the BindingGenerator to automatically produce the manual implementations currently required.
 
+## Implementation Status
+
+- ✅ **Phase 1 Complete** (December 30, 2024) - New union type patterns (BoolOrString, NumberOrStringArray)
+- ✅ **Phase 2 Complete** (December 30, 2024) - SingleOrArrayType for Grid/XAxis/YAxis automation
+- ⏳ **Phase 3 Pending** - EnumOrFunctionType for Sort properties
+- ⏳ **Phase 4 Pending** - Visual properties enrichment (optional)
+
 ## Current Generator Architecture
 
 ### Key Components
@@ -163,6 +170,26 @@ else
 3. `Generators/ObjectTypeClassGenerator.cs` - Modify `Generate()` method
 
 **Difficulty:** ⭐⭐⭐ Medium - Requires new type class and generator logic changes
+
+**Implementation Complete (December 30, 2024):**
+
+✅ Created `Types/SingleOrArrayType.cs` with InnerTypeName property  
+✅ Added `IsArrayAndObject()` helper method to BasePhase.cs  
+✅ Added detection logic in `MapType()` to identify array+object patterns with ItemType  
+✅ Modified ObjectTypeClassGenerator.cs to generate three properties when encountering SingleOrArrayType  
+✅ Created 8 unit tests in Phase2SingleOrArrayTests.cs (all passing)  
+✅ Verified existing manual implementations (Grid, XAxis, YAxis, Calendar, Dataset) match generated pattern  
+
+**Test Results:** 49/49 tests passing (41 original + 8 Phase 2)
+
+**Properties Now Automatable:**
+- `ChartOptions.Grid` / `GridList` / `GridObject`
+- `ChartOptions.XAxis` / `XAxisList` / `XAxisObject`
+- `ChartOptions.YAxis` / `YAxisList` / `YAxisObject`
+- `ChartOptions.Calendar` / `CalendarList` / `CalendarObject`
+- `ChartOptions.Dataset` / `DatasetList` / `DatasetObject`
+
+**Note:** The generator now automatically creates the three-property pattern (Object backing field + single accessor + list accessor) for any property with `types: ["array", "object"]` and an ItemType defined in option.json.
 
 ---
 

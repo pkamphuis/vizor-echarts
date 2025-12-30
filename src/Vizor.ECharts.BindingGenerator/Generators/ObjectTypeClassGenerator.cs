@@ -61,6 +61,37 @@ internal class ObjectTypeClassGenerator
 			{
 				writer.WriteLine($"//TODO: {prop.PropertyName}");
 			}
+			else if (prop.MappedType is SingleOrArrayType singleOrArray)
+			{
+				// Generate three properties for single-or-array pattern:
+				// 1. Object backing field with [JsonPropertyName]
+				// 2. Single accessor with [JsonIgnore]
+				// 3. List accessor with [JsonIgnore]
+
+				writer.WriteDocumentation(prop.Description);
+				writer.WriteLine($"[JsonPropertyName(\"{prop.Name}\")]");
+				writer.WriteDefaultValueAttribute(prop.Default);
+				writer.WriteLine($"public object? {prop.PropertyName}Object {{ get; set; }}");
+				writer.EmptyLine();
+
+				writer.WriteDocumentation(prop.Description);
+				writer.WriteLine($"[JsonIgnore]");
+				writer.WriteLine($"public {singleOrArray.InnerTypeName}? {prop.PropertyName}");
+				writer.OpenBrace();
+				writer.WriteLine($"\tget => {prop.PropertyName}Object as {singleOrArray.InnerTypeName};");
+				writer.WriteLine($"\tset => {prop.PropertyName}Object = value;");
+				writer.CloseBrace();
+				writer.EmptyLine();
+
+				writer.WriteDocumentation(prop.Description);
+				writer.WriteLine($"[JsonIgnore]");
+				writer.WriteLine($"public List<{singleOrArray.InnerTypeName}>? {prop.PropertyName}List");
+				writer.OpenBrace();
+				writer.WriteLine($"\tget => {prop.PropertyName}Object as List<{singleOrArray.InnerTypeName}>;");
+				writer.WriteLine($"\tset => {prop.PropertyName}Object = value;");
+				writer.CloseBrace();
+				writer.EmptyLine();
+			}
 			else
 			{
 				// the 'type' property of anyOf objects is mandatory

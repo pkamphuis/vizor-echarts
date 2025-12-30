@@ -198,7 +198,17 @@ internal abstract class BasePhase
 		// first try mapping enum types by name
 		if (typeCollection.TryGetMappedEnumType(prop.Name, parent.Name, out var mappedEnumType))
 			return mappedEnumType;
-
+	// detect single-or-array pattern (Grid, XAxis, YAxis, etc.)
+	// These properties accept either a single object or an array of objects
+	if (IsArrayAndObject(optProp) && optProp.ItemType != null)
+	{
+		// The ItemType contains the object type (e.g., Grid, XAxis, YAxis)
+		var innerType = optProp.ItemType;
+		if (innerType is IObjectType objType)
+		{
+			return new SingleOrArrayType(objType.DotNetType);
+		}
+	}
 		// matching based on types: simple first
 		if (optProp.Types.Count == 1)
 		{
@@ -331,6 +341,17 @@ internal abstract class BasePhase
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// Detects if a property accepts both array and object types (e.g., Grid, XAxis, YAxis)
+	/// </summary>
+	protected bool IsArrayAndObject(OptionProperty optProp)
+	{
+		return optProp.Types != null && 
+		       optProp.Types.Contains("array") && 
+		       optProp.Types.Contains("object") &&
+		       optProp.Types.Count == 2;
 	}
 
 	protected string GetPropertyList(ObjectType objectType)
