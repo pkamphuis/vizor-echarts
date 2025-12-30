@@ -16,8 +16,8 @@ public class ChartOptionsSerializationTests
         string json = JsonSerializer.Serialize(options, serializerOptions);
 
         Assert.IsFalse(string.IsNullOrWhiteSpace(json));
-        Assert.IsTrue(json.Contains("\"title\""));
-        Assert.IsTrue(json.Contains("\"line\""));
+        Assert.Contains("\"title\"", json);
+        Assert.Contains("\"line\"", json);
 
         SnapshotHelper.AssertJsonSnapshot(
             options,
@@ -35,8 +35,8 @@ public class ChartOptionsSerializationTests
         string json = JsonSerializer.Serialize(options, serializerOptions);
 
         Assert.IsFalse(string.IsNullOrWhiteSpace(json));
-        Assert.IsTrue(json.Contains("\"bar\""));
-        Assert.IsTrue(json.Contains("\"stack\""));
+        Assert.Contains("\"bar\"", json);
+        Assert.Contains("\"stack\"", json);
 
         SnapshotHelper.AssertJsonSnapshot(
             options,
