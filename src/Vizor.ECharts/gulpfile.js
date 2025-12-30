@@ -12,7 +12,7 @@
 
 var path = require('path'),
 	rename = require('gulp-rename'),
-	clean = require('gulp-clean'),
+	del = require('del'),
 	gulp = require('gulp'),
 	sass = require('gulp-sass')(require('sass')),
 	postcss = require('gulp-postcss'),
@@ -44,9 +44,7 @@ var destPaths = {
 
 
 gulp.task('clean', () => {
-	return gulp.src(
-		[path.resolve(wwwroot, 'js/**')])
-		.pipe(clean());
+	return del([path.resolve(wwwroot, 'js/**')]);
 });
 
 gulp.task('buildJs', () => {

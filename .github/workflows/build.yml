@@ -34,7 +34,7 @@ jobs:
         working-directory: src/Vizor.ECharts
       
       - name: Build JS bundle with Gulp
-        run: npm run build  # or: gulp
+        run: npx gulp
         working-directory: src/Vizor.ECharts
       
       - name: Pack NuGet (Release)
