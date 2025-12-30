@@ -18,7 +18,7 @@ public class JavascriptFunctionSerializationTests
 
         string json = JsonSerializer.Serialize(options, CreateOptions());
 
-        Assert.IsTrue(json.Contains("function (params)"));
-        Assert.IsFalse(json.Contains("\\\\"), "Function should not be double-escaped");
+        Assert.Contains("function (params)", json);
+        Assert.DoesNotContain("\\\\", json, "Function should not be double-escaped");
     }
 }
