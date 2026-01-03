@@ -110,12 +110,14 @@ internal class TypeCollection
         AddMappedEnumType(new MappedEnumType("edgeShape", typeof(TreeEdgeShape)), "TreeSeries");
 
         AddMappedEnumType(new MappedEnumType("funnelAlign", typeof(FunnelAlign)), "FunnelSeries");
+        AddMappedEnumType(new MappedEnumType("sort", typeof(FunnelSortOrder)), "FunnelSeries");
 
         AddMappedEnumType(new MappedEnumType("nodeAlign", typeof(SankeyNodeAlign)), "SankeySeries");
 
         AddMappedEnumType(new MappedEnumType("layout", typeof(GraphLayout)), "GraphSeries");
 
         AddMappedEnumType(new MappedEnumType("nodeClick", typeof(SunburstNodeClick)), "SunburstSeries");
+        AddMappedEnumType(new MappedEnumType("sort", typeof(SortOrder)), "SunburstSeries");
 
         AddMappedEnumType(new MappedEnumType("symbolRepeatDirection", typeof(StartOrEnd)), "PictorialBarSeries", "PictorialBarSeriesData");
         AddMappedEnumType(new MappedEnumType("symbolPosition", typeof(StartOrEndOrCenter)), "PictorialBarSeries", "PictorialBarSeriesData");
@@ -149,25 +151,67 @@ internal class TypeCollection
 
     public IPropertyType? MapArrayType(ObjectType parent, OptionProperty optProp, JsonProperty prop)
     {
-        // did we succeed in determining the item type ?
-        if (optProp.ItemType != null)
+        // FIRST: Check for special cases that should override ItemType determination
+        // These must come before ItemType processing to ensure they take priority
+        // Note: Use parent.DotNetType (not parent.Name which is empty for root)
+        switch (prop.Name, parent.DotNetType)
         {
-            return new GenericListType(optProp.ItemType);
-        }
-
-        // special cases: these are often aliases
-        switch (prop.Name, parent.Name)
-        {
+            case ("series", "ChartOptions"):
+                // Use typed list of ISeries for type safety instead of List<object>
+                return new GenericListType(new SimpleType("ISeries"));
+            case ("dataZoom", "ChartOptions"):
+                // Use typed list of IDataZoom for type safety instead of List<object>
+                return new GenericListType(new SimpleType("IDataZoom"));
+            case ("dimensions", "Dataset"):
+            case ("dimensions", _) when parent.DotNetType.EndsWith("Series"):
+                // Use string array (full union type support planned for future)
+                return new SimpleType("string[]");
+            case ("text", "ContinuousVisualMap"):
+            case ("text", "PiecewiseVisualMap"):
+                // Use string array for text labels
+                return new SimpleType("string[]");
             case ("nodes", "SankeySeries"):
                 return new GenericListType(new SimpleType("SankeySeriesData"));
             case ("edges", "SankeySeries"):
-                return new GenericListType(new SimpleType("SankeySeriesLinks"));
+                return new GenericListType(new SimpleType("SankeySeriesLink"));
             case ("nodes", "GraphSeries"):
                 return new GenericListType(new SimpleType("GraphSeriesData"));
             case ("edges", "GraphSeries"):
-                return new GenericListType(new SimpleType("GraphSeriesLinks"));
+                return new GenericListType(new SimpleType("GraphSeriesLink"));
         }
 
+        // did we succeed in determining the item type ?
+        if (optProp.ItemType != null)
+        {
+            // For series data properties, use object? for maximum flexibility
+            // ECharts data can be arrays, objects, JavascriptFunction, or dataset references
+            if (prop.Name == "data" && parent.Name.EndsWith("Series"))
+            {
+                return new SimpleType("object");
+            }
+            
+            // Use DataList for axis/legend data properties that need string array support
+            if (prop.Name == "data")
+            {
+                string parentName = parent.Name;
+                // Check for axis types (note: parent.Name is lowercase from JSON)
+                if (parentName == "xAxis" || parentName == "yAxis" || parentName == "angleAxis" || 
+                    parentName == "radiusAxis" || parentName == "parallelAxis" || parentName == "parallelAxisDefault" ||
+                    parentName == "singleAxis")
+                {
+                    return new DataListType(optProp.ItemType);
+                }
+                // Check for legend
+                if (parentName == "legend")
+                {
+                    return new DataListType(optProp.ItemType);
+                }
+            }
+            
+            return new GenericListType(optProp.ItemType);
+        }
+
+        // no ItemType, fallback to List<object> with warning
         //Console.WriteLine($"WARNING: array type '{prop.Name}' in '{parent.Name}' will be mapped to List<object>");
         return new ObjectListType()
         {
@@ -222,6 +266,22 @@ internal class TypeCollection
         }
 
         return mergedType;
+    }
+
+    public ObjectType GetOrCreateSharedType(string typeName, string typeGroup)
+    {
+        // Check if shared type already exists
+        if (objectTypeLookup.TryGetValue(typeName, out var existingType))
+        {
+            return existingType;
+        }
+
+        // Create new shared type for hand-coded class
+        var sharedType = new ObjectType(null, typeName, typeGroup: typeGroup);
+        sharedType.IsShared = true; // Mark as shared/hand-coded
+        objectTypeLookup.Add(typeName, sharedType);
+
+        return sharedType;
     }
 
     private void AddMappedEnumType(MappedEnumType mappedType, params string[]? specificObjectTypes)

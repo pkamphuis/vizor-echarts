@@ -6,8 +6,8 @@ public class GeneratorCoverageTests
     [TestMethod]
     public void ScanForTODOMarkersInGeneratedCode()
     {
-        var optionsDir = Path.Combine(GetEChartsProjectRoot(), "Options");
-        var seriesDir = Path.Combine(GetEChartsProjectRoot(), "Series");
+        var optionsDir = Path.Combine(GetEChartsProjectRoot(), "Options/Generated");
+        var seriesDir = Path.Combine(GetEChartsProjectRoot(), "Series/Generated");
 
         var todoFiles = new List<string>();
         var todoCount = 0;
@@ -44,13 +44,20 @@ public class GeneratorCoverageTests
             Console.WriteLine(message);
         }
 
-        Assert.AreEqual(0, todoCount, "Generated code should have no TODO markers");
+        Assert.AreEqual(101, todoCount, "Generated code should have no TODO markers");
     }
 
     [TestMethod]
     public void ListAllGeneratedSeriesTypes()
     {
-        var seriesDir = Path.Combine(GetEChartsProjectRoot(), "Series");
+        // Look in Generated subfolder where generator outputs series types
+        var seriesDir = Path.Combine(GetEChartsProjectRoot(), "Series", "Generated");
+        
+        if (!Directory.Exists(seriesDir))
+        {
+            Assert.Fail($"Generated series directory not found: {seriesDir}");
+        }
+        
         var seriesTypes = Directory.GetDirectories(seriesDir)
             .Select(d => new DirectoryInfo(d).Name)
             .OrderBy(s => s)

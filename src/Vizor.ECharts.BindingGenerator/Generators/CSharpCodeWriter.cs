@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text;
 
+using HtmlAgilityPack;
+
 namespace Vizor.ECharts.BindingGenerator.Generators;
 
 internal sealed class CSharpCodeWriter : IDisposable
@@ -26,9 +28,11 @@ internal sealed class CSharpCodeWriter : IDisposable
 
     public string Filename { get; }
 
-    public void WriteNotice()
+    public void WriteNotice(string? echartsVersion = null)
     {
         writer.WriteLine("// AUTO GENERATED - DO NOT EDIT - All changes will be lost");
+        if (!string.IsNullOrEmpty(echartsVersion))
+            writer.WriteLine($"// ECharts Version: {echartsVersion}");
         writer.WriteLine("// http://www.datahint.eu/");
         writer.WriteLine();
     }

@@ -34,6 +34,7 @@ public class ChartOptionsSerializationTests
 
         string json = JsonSerializer.Serialize(options, serializerOptions);
 
+
         Assert.IsFalse(string.IsNullOrWhiteSpace(json));
         Assert.Contains("\"bar\"", json);
         Assert.Contains("\"stack\"", json);
