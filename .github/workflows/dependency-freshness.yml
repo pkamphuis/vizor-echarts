@@ -1,0 +1,54 @@
+name: Dependency Freshness Check
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: './global.json'
+          cache: true
+          cache-dependency-path: |
+            global.json
+            src/**/*.csproj
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'src/Vizor.ECharts/package.json'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore src/Vizor.ECharts.Demo.sln
+
+      - name: Build .NET (Release)
+        run: dotnet build src/Vizor.ECharts.Demo.sln --no-restore --configuration Release
+
+      - name: Test .NET (Release)
+        run: dotnet test --project src/Vizor.ECharts.Tests/Vizor.ECharts.Tests.csproj --no-build --configuration Release
+
+      - name: Install npm dependencies (fresh)
+        run: npm install
+        working-directory: src/Vizor.ECharts
+
+      - name: Build JS bundle with Gulp
+        run: npx gulp buildJs && npx gulp buildJsBundle
+        working-directory: src/Vizor.ECharts
+
+      - name: Audit npm vulnerabilities
+        run: npm audit --audit-level=high
+        working-directory: src/Vizor.ECharts
