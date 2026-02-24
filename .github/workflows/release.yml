@@ -1,0 +1,66 @@
+name: Release to NuGet
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: './global.json'
+          cache: true
+          cache-dependency-path: |
+            global.json
+            src/**/*.csproj
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'src/Vizor.ECharts/package-lock.json'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore src/Vizor.ECharts.Demo.sln
+
+      - name: Build .NET
+        run: dotnet build src/Vizor.ECharts.Demo.sln --no-restore --configuration Release
+
+      - name: Test .NET
+        run: dotnet test --project src/Vizor.ECharts.Tests/Vizor.ECharts.Tests.csproj --no-build --configuration Release --report-trx --results-directory ./artifacts/test-results
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: src/Vizor.ECharts
+
+      - name: Build JS bundle with Gulp
+        run: npx gulp buildJs && npx gulp buildJsBundle
+        working-directory: src/Vizor.ECharts
+
+      - name: Pack NuGet (Release)
+        run: dotnet pack -c Release --no-build src/Vizor.ECharts/Vizor.ECharts.csproj
+
+      - name: Upload release package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: src/Vizor.ECharts/bin/Release/**/*.nupkg
+          if-no-files-found: error
+
+      - name: Publish package to NuGet
+        run: dotnet nuget push "src/Vizor.ECharts/bin/Release/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
